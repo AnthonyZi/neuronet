@@ -7,6 +7,7 @@
 #include "fileinput.h"
 #include <cstdlib>
 #include <ctime>
+#include "return_states.h"
 
 typedef struct neuron
 {
@@ -24,8 +25,7 @@ typedef std::vector<edgelayer> edgelayers_vec;
 class NeuroAI
 {
 private:
-        neuronlayer input, output;
-        neuronlayers_vec hidden;
+        neuronlayers_vec layers;
         edgelayers_vec edges;
 
         float randweight(float pmin, float pmax);

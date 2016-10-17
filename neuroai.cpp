@@ -14,11 +14,19 @@ NeuroAI::NeuroAI(fileitem_vector pfvector)
         }
         std::cout << std::endl;
         
-
+        int order_var = 0;
         for(int i = 0; i<pfvector.size(); i++)
         {
+                neuronlayer tmp_layer;
                 if(pfvector[i].label.compare("input") == 0)
                 {
+                        if(order_var != 0)
+                        {
+                                std::cout << "format error in config file - (input,hidden,output order)" << std::endl;
+                                exit(broken_config);
+                        }
+                        order_var++;
+
                         for(int j = 0; j<pfvector[i].itemnames.size(); j++)
                         {
                                 neuron_st newneuron;
@@ -26,25 +34,19 @@ NeuroAI::NeuroAI(fileitem_vector pfvector)
                                 newneuron.name = pfvector[i].itemnames[j];
                                 newneuron.bias = 0;
 
-                                input.push_back(newneuron);
+                                tmp_layer.push_back(newneuron);
                         }
+                        layers.push_back(tmp_layer);
                 }
-                if(pfvector[i].label.compare("output") == 0)
-                {
-                        for(int j = 0; j<pfvector[i].itemnames.size(); j++)
-                        {
-                                neuron_st newneuron;
-                                //initialize new neuron
-                                newneuron.name = pfvector[i].itemnames[j];
-                                newneuron.bias = 0;
-
-                                output.push_back(newneuron);
-                        }
-
-                }
+                
                 if(pfvector[i].label.compare("hidden") == 0)
                 {
-                        neuronlayer hlayer;
+                        if(order_var != 1)
+                        {
+                                std::cout << "format error in config file - (input,hidden,output order)" << std::endl;
+                                exit(broken_config);
+                        }
+
                         //initialize new layer
                         for(int j = 0; j<pfvector[i].itemnames.size(); j++)
                         {
@@ -53,18 +55,53 @@ NeuroAI::NeuroAI(fileitem_vector pfvector)
                                 newneuron.name = pfvector[i].itemnames[j];
                                 newneuron.bias = 0;
 
-                                hlayer.push_back(newneuron);
+                                tmp_layer.push_back(newneuron);
                         }
                         //push new layer to the hiddenlayers_vec 'hidden'
-                        hidden.push_back(hlayer);
+                        layers.push_back(tmp_layer);
+                }
+                if(pfvector[i].label.compare("output") == 0)
+                {
+                        if(order_var != 1)
+                        {
+                                std::cout << "format error in config file - (input,hidden,output order)" << std::endl;
+                                exit(broken_config);
+                        }
+                        order_var++;
+
+                        for(int j = 0; j<pfvector[i].itemnames.size(); j++)
+                        {
+                                neuron_st newneuron;
+                                //initialize new neuron
+                                newneuron.name = pfvector[i].itemnames[j];
+                                newneuron.bias = 0;
+
+                                tmp_layer.push_back(newneuron);
+                        }
+                        layers.push_back(tmp_layer);
+
                 }
         }
         generate_edges();
 
-        for(int i = 1; i <= (1 + hidden.size()); i++) //output_layer + hidden layers
+        for(int i = 1; i < layers.size(); i++) //output_layer + hidden layers
                 print_edges(i);
 
-        for(int i = 0; i <= (1 + hidden.size()); i++) //input_layer + output_layer + hidden layers
+        std::vector<float> param;
+        param.push_back(1.0);
+        param.push_back(0.3);
+        param.push_back(0.9);
+        param.push_back(0.1);
+        param.push_back(0.5);
+
+        set_input(param);
+
+        for(int i = 0; i < layers.size(); i++) //input_layer + output_layer + hidden layers
+                print_layer_biases(i);
+
+        calculate_output();
+
+        for(int i = 0; i < layers.size(); i++) //input_layer + output_layer + hidden layers
                 print_layer_biases(i);
 }
 
@@ -102,6 +139,12 @@ void NeuroAI::generate_edges()
         std::srand(std::time(0)); // one seed for the now following random function calls
         edgelayer tmp_edgelayer;
 
+        for(int i = 1; i<layers.size(); i++)
+        {
+                tmp_edgelayer = generate_edge_layer(layers[i-1], layers[i]);
+                edges.push_back(tmp_edgelayer);
+        }
+        /*
         if(hidden.size()>0)
         {
                 tmp_edgelayer = generate_edge_layer(input, hidden[0]);
@@ -117,44 +160,48 @@ void NeuroAI::generate_edges()
         else
                 tmp_edgelayer = generate_edge_layer(input, output);
                 edges.push_back(tmp_edgelayer);
+        */
 }
 
 void NeuroAI::set_input(std::vector<float> pbiases)
 {
+        if(pbiases.size() != layers[0].size())
+                return;
+        for(int i = 0; i<pbiases.size(); i++)
+        {
+                layers[0][i].bias = pbiases[i];
+        }
 }
 
 void NeuroAI::calculate_output()
 {
+        for(int l = 1; l<layers.size(); l++)
+        {
+                for(int outp = 0; outp<layers[l].size(); outp++)
+                {
+                        for(int inp = 0; inp<layers[l-1].size(); inp++)
+                        {
+                                layers[l][outp].bias += layers[l-1][inp].bias * edges[l-1][outp][inp];
+                        }
+                }
+        }
 }
 
 void NeuroAI::print_layer_biases(int player)
 {
-        neuronlayers_vec all_layers;
-        all_layers.push_back(input);
-        for(int i = 0; i<hidden.size(); i++)
-                all_layers.push_back(hidden[i]);
-        all_layers.push_back(output);
-
-        for(int i = 0; i<all_layers[player].size(); i++)
+        for(int i = 0; i<layers[player].size(); i++)
         {
-                std::cout << all_layers[player][i].name << " : " << all_layers[player][i].bias << std::endl;
+                std::cout << layers[player][i].name << " : " << layers[player][i].bias << std::endl;
         }
 }
 
 void NeuroAI::print_edges(int poutput_layer)
 {
-        
-        neuronlayers_vec all_layers;
-        all_layers.push_back(input);
-        for(int i = 0; i<hidden.size(); i++)
-                all_layers.push_back(hidden[i]);
-        all_layers.push_back(output);
-
-        for(int i = 0; i<all_layers[poutput_layer].size(); i++)
+        for(int i = 0; i<layers[poutput_layer].size(); i++)
         {
-                for(int j = 0; j<all_layers[poutput_layer-1].size(); j++)
+                for(int j = 0; j<layers[poutput_layer-1].size(); j++)
                 {
-                        std::cout << all_layers[poutput_layer-1][j].name << "->" << all_layers[poutput_layer][i].name << " : " << edges[poutput_layer-1][i][j] << std::endl;
+                        std::cout << layers[poutput_layer-1][j].name << "->" << layers[poutput_layer][i].name << " : " << edges[poutput_layer-1][i][j] << std::endl;
                 }
         }
 
