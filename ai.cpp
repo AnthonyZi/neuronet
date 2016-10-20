@@ -1,26 +1,39 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include "fileinput.h"
-#include "neuroai.h"
-#include "return_states.h"
+#include "global_definitions.h"
 
+#ifndef VER2
+#include "fileinput.h"
+#include "neuralnet.h"
+#else
+#include "neuralnet2.h"
+#endif
 
 int main(int argc, char* argv[])
 {
+
+//configure neural net
+
+
+        #ifndef VER2
         if(argc <= 1)
         {
                 std::cout << "please name a config-file as an argument" << std::endl;
                 return argument_error;
         }
 
-
-//configure neural net
-
-
         fileitem_vector config_vec = readneuroconfig(argv[1]);
 
-        NeuroAI nai = NeuroAI(config_vec); 
+        NeuralNet net = NeuralNet(config_vec); 
+
+        #else
+        std::vector<int> configuration;
+        configuration.push_back(3);
+        configuration.push_back(2);
+        configuration.push_back(1);
+        NeuralNet net = NeuralNet(configuration);
+        #endif
         /*
         for(int i = 0; i<config_vec.size(); i++)
         {
