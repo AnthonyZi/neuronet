@@ -5,11 +5,7 @@
 #include <cmath>
 #include "global_definitions.h"
 
-#ifndef VER2
 #include "neuralnet.h"
-#else
-#include "neuralnet2.h"
-#endif
 
 
 float dot_product(std::vector<float> pveca, std::vector<float> pvecb);

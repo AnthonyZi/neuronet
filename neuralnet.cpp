@@ -1,87 +1,12 @@
 #include "neuralnet.h"
 
-NeuralNet::NeuralNet(fileitem_vector pfvector)
+NeuralNet::NeuralNet(std::vector<int> player_sizes)
 {
-        //print the configuration out for user-check
-        for(int i = 0; i<pfvector.size(); i++)
-        {
-                std::cout << pfvector[i].label << ":";
-                for(int j = 0; j<pfvector[i].itemnames.size(); j++)
-                {
-                        std::cout << " ." << pfvector[i].itemnames[j];
-                }
-                std::cout << std::endl;
-        }
-        std::cout << std::endl;
-        
-        //iterate through each line and set up the neural net
-        int order_var = 0;
-        for(int i = 0; i<pfvector.size(); i++)
+        for(int i = 0; i<player_sizes.size(); i++)
         {
                 neuronlayer tmp_layer;
-                if(pfvector[i].label.compare("input") == 0)
-                {
-                        if(order_var != 0)
-                        {
-                                std::cout << "format error in config file - (input,hidden,output order)" << std::endl;
-                                exit(broken_config);
-                        }
-                        order_var++;
-
-                        for(int j = 0; j<pfvector[i].itemnames.size(); j++)
-                        {
-                                neuron_st newneuron;
-                                //initialize new neuron
-                                newneuron.name = pfvector[i].itemnames[j];
-                                newneuron.bias = 0;
-
-                                tmp_layer.push_back(newneuron);
-                        }
-                        layers.push_back(tmp_layer);
-                }
-                
-                if(pfvector[i].label.compare("hidden") == 0)
-                {
-                        if(order_var != 1)
-                        {
-                                std::cout << "format error in config file - (input,hidden,output order)" << std::endl;
-                                exit(broken_config);
-                        }
-
-                        //initialize new layer
-                        for(int j = 0; j<pfvector[i].itemnames.size(); j++)
-                        {
-                                neuron_st newneuron;
-                                //initialize new neuron
-                                newneuron.name = pfvector[i].itemnames[j];
-                                newneuron.bias = 0;
-
-                                tmp_layer.push_back(newneuron);
-                        }
-                        //push new layer to the hiddenlayers_vec 'hidden'
-                        layers.push_back(tmp_layer);
-                }
-                if(pfvector[i].label.compare("output") == 0)
-                {
-                        if(order_var != 1)
-                        {
-                                std::cout << "format error in config file - (input,hidden,output order)" << std::endl;
-                                exit(broken_config);
-                        }
-                        order_var++;
-
-                        for(int j = 0; j<pfvector[i].itemnames.size(); j++)
-                        {
-                                neuron_st newneuron;
-                                //initialize new neuron
-                                newneuron.name = pfvector[i].itemnames[j];
-                                newneuron.bias = 0;
-
-                                tmp_layer.push_back(newneuron);
-                        }
-                        layers.push_back(tmp_layer);
-
-                }
+                tmp_layer.resize(player_sizes[i]);
+                layers.push_back(tmp_layer);
         }
 
         initialise_neural_net();
@@ -100,19 +25,11 @@ NeuralNet::NeuralNet(fileitem_vector pfvector)
 
         test.push_back(1.0);
         test.push_back(0.3);
+        test.push_back(0.5);
 
         test = feedforward(test);
 
         print_output(test);
-
-//        std::vector<float> param;
-//        param.push_back(1.0);
-//        param.push_back(0.3);
-//        param.push_back(0.9);
-//        param.push_back(0.1);
-//        param.push_back(0.5);
-//
-//        set_input(param);
 }
 
 
@@ -160,30 +77,16 @@ void NeuralNet::set_biases_layer(std::vector<float> pbiases, int player)
         {
                 exit(inconsistent_bias_numbers);
         }
-        for(int i = 0; i<pbiases.size(); i++)
-        {
-                layers[player][i].bias = pbiases[i];
-        }
+        layers[player] = pbiases;
 }
 
 void NeuralNet::generate_initial_biases()
 {
         for(int l = 1; l<layers.size(); l++) // l=0 is the input layer and biases do not need to be set
         {
-                /*
-                std::vector<float> tmpbiases;
                 for(int i = 0; i<layers[l].size(); i++)
                 {
-                       tmpbiases.push_back(rand_range(-1.0, 1.0)); 
-                }
-                set_biases_layer(tmpbiases, l);
-                */
-
-                //faster implementation of the above
-                //initial set up of all biases within a layer
-                for(int i = 0; i<layers[l].size(); i++)
-                {
-                        layers[l][i].bias = rand_range(-1.0, 1.0);
+                        layers[l][i] = rand_range(-1.0, 1.0);
                 }
         }
 }
@@ -205,11 +108,26 @@ std::vector<float> NeuralNet::feedforward(std::vector<float> pinput)
         return tmp;
 }
 
+char NeuralNet::get_layer_type(int player)
+{
+        char tmp;
+        if(player==0)
+                tmp = 'i';
+        else
+        {
+                if(player==layers.size()-1)
+                        tmp = 'o';
+                else
+                        tmp = 'h';
+        }
+        return tmp;
+}
+
 void NeuralNet::print_layer_biases(int player)
 {
         for(int i = 0; i<layers[player].size(); i++)
         {
-                std::cout << layers[player][i].name << " : " << layers[player][i].bias << std::endl;
+                std::cout << get_layer_type(player) << i+1 << " : " << layers[player][i] << std::endl;
         }
 }
 
@@ -219,7 +137,7 @@ void NeuralNet::print_edges(int poutput_layer)
         {
                 for(int j = 0; j<layers[poutput_layer-1].size(); j++)
                 {
-                        std::cout << layers[poutput_layer-1][j].name << "->" << layers[poutput_layer][i].name << " : " << edges[poutput_layer-1][i][j] << std::endl;
+                        std::cout << get_layer_type(poutput_layer-1) << j+1 << "->" << get_layer_type(poutput_layer) << i+1 << " : " << edges[poutput_layer-1][i][j] << std::endl;
                 }
         }
 }
@@ -227,5 +145,5 @@ void NeuralNet::print_edges(int poutput_layer)
 void NeuralNet::print_output(std::vector<float> presult)
 {
         for(int i = 0; i<presult.size(); i++)
-                std::cout << layers[layers.size()-1][i].name << " -> " << presult[i] << std::endl;
+                std::cout << "o" << i+1 << " -> " << presult[i] << std::endl;
 }

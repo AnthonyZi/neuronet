@@ -34,11 +34,7 @@ std::vector<float> calculate_layer(std::vector<float> pvec, std::vector<std::vec
         std::vector<float> tmpvec;
         for(int i = 0; i<pmat.size(); i++)
         {
-                #ifndef VER2
-                tmpvec.push_back(activation_function(dot_product(pvec, pmat[i]) + pbias_neurons[i].bias));
-                #else
                 tmpvec.push_back(activation_function(dot_product(pvec, pmat[i]) + pbias_neurons[i]));
-                #endif
         }
         return tmpvec;
 }

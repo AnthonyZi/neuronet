@@ -1,7 +1,6 @@
-#ifndef RETURN_STATES_H
-#define RETURN_STATES_H
+#ifndef GLOBAL_DEFINITIONS_H
+#define GLOBAL_DEFINITIONS_H
 
-//#define VER2
 #define SIGMOID
 //#define SOFTSIGN
 
