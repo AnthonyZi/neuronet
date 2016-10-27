@@ -1,0 +1,10 @@
+compilation:
+
+VER1:
+  g++ -o exe fileinput.cpp ai.cpp neuralnet.cpp nn_math.cpp
+
+VER2:
+  g++ -o exe fileinput.cpp ai.cpp neuralnet2.cpp nn_math.cpp -DVER2
+or
+  add #define in global_definitions: "#define VER2"
+& g++ -o exe fileinput.cpp ai.cpp neuralnet2.cpp nn_math.cpp

@@ -31,7 +31,30 @@ int main(int argc, char* argv[])
         std::vector<int> configuration;
         configuration.push_back(3);
         configuration.push_back(2);
+        configuration.push_back(5);
+        configuration.push_back(6);
+        configuration.push_back(5);
+        configuration.push_back(3);
         configuration.push_back(1);
+        configuration.push_back(2);
+        configuration.push_back(5);
+        configuration.push_back(6);
+        configuration.push_back(5);
+        configuration.push_back(3);
+        configuration.push_back(1);
+        configuration.push_back(2);
+        configuration.push_back(5);
+        configuration.push_back(6);
+        configuration.push_back(5);
+        configuration.push_back(3);
+        configuration.push_back(1);
+        configuration.push_back(2);
+        configuration.push_back(5);
+        configuration.push_back(6);
+        configuration.push_back(5);
+        configuration.push_back(3);
+        configuration.push_back(1);
+
         NeuralNet net = NeuralNet(configuration);
         #endif
         /*
