@@ -33,7 +33,7 @@ public:
         void generate_initial_biases();
         void initialise_neural_net();
         std::vector<float> feedforward(std::vector<float> pinput);
-        char get_layer_type(int player);
+        std::string get_layer_name(int player);
         void print_layer_biases(int player); // arg-range:0 until #hidden + 1
         void print_edges(int poutput_layer); // arg-range:1 until #hidden + 1
         void print_output(std::vector<float> presult);

@@ -108,9 +108,9 @@ std::vector<float> NeuralNet::feedforward(std::vector<float> pinput)
         return tmp;
 }
 
-char NeuralNet::get_layer_type(int player)
+std::string NeuralNet::get_layer_name(int player)
 {
-        char tmp;
+        std::string tmp;
         if(player==0)
                 tmp = 'i';
         else
@@ -118,7 +118,7 @@ char NeuralNet::get_layer_type(int player)
                 if(player==layers.size()-1)
                         tmp = 'o';
                 else
-                        tmp = 'h';
+                        tmp = "h"+std::to_string(player)+"-";
         }
         return tmp;
 }
@@ -127,7 +127,7 @@ void NeuralNet::print_layer_biases(int player)
 {
         for(int i = 0; i<layers[player].size(); i++)
         {
-                std::cout << get_layer_type(player) << i+1 << " : " << layers[player][i] << std::endl;
+                std::cout << get_layer_name(player) << i+1 << " : " << layers[player][i] << std::endl;
         }
 }
 
@@ -137,7 +137,7 @@ void NeuralNet::print_edges(int poutput_layer)
         {
                 for(int j = 0; j<layers[poutput_layer-1].size(); j++)
                 {
-                        std::cout << get_layer_type(poutput_layer-1) << j+1 << "->" << get_layer_type(poutput_layer) << i+1 << " : " << edges[poutput_layer-1][i][j] << std::endl;
+                        std::cout << get_layer_name(poutput_layer-1) << j+1 << " -> " << get_layer_name(poutput_layer) << i+1 << " : " << edges[poutput_layer-1][i][j] << std::endl;
                 }
         }
 }
