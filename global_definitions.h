@@ -1,8 +1,16 @@
 #ifndef GLOBAL_DEFINITIONS_H
 #define GLOBAL_DEFINITIONS_H
 
+#include <cstdlib>
+
 #define SIGMOID
 //#define SOFTSIGN
+
+
+typedef struct trainig_data{ 
+        std::vector<float> input; 
+        std::vector<float> output;                   
+} training_data_s;
 
 enum return_states
 {

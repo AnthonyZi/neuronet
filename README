@@ -1,3 +1,3 @@
 compilation:
 
-g++ -o exe ai.cpp neuralnet.cpp nn_math.cpp
+g++ -o exe ai.cpp neuralnet.cpp nn_math.cpp -std=c++11
