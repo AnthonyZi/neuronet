@@ -56,6 +56,15 @@ float NeuralNet::rand_range(float pmin, float pmax)
 }
 
 //public
+//
+//structure:
+//
+//              input
+//              ------>
+//
+//        |    | e00 e10 e20 e30 |  all weights from layer i to layer i+1 so that z[i+1][0] can be calculated with this
+// output |    | e01 e11 e21 e31 |
+//        V    | e02 e12 e22 e32 |
 edgelayer NeuralNet::generate_edge_layer(neuronlayer pnlayer_in, neuronlayer pnlayer_out)
 {
         edgelayer tmp_edgelayer;
@@ -83,6 +92,16 @@ void NeuralNet::generate_initial_edges()
         }
 }
 
+// structure:
+//
+// memory ->
+// | i1 i2 i3 i4 i5 |   inputlayer
+// | h1 h2 h3 h4 |      hiddenlayer1
+// | h1 h2 h3 |         hiddenlayer2
+// | h1 h2 |            hiddenlayer3
+// | o1 |               outputlayer
+//
+// hiddenlayer1 & 3 neuron : biases[1][2]
 void NeuralNet::generate_initial_biases()
 {
         for(int l = 1; l<biases.size(); l++) // l=0 is the input layer and biases do not need to be set
@@ -107,7 +126,7 @@ std::vector<float> NeuralNet::feedforward(std::vector<float> pinput)
                 exit(wrong_input_size);
         std::vector<float> tmp(pinput);
         for(int l = 1; l<biases.size(); l++)
-                tmp = calculate_layer(tmp, edges[l-1], biases[l]);
+                tmp = calculate_next_layer(tmp, edges[l-1], biases[l]);
         return tmp;
 }
 
@@ -118,7 +137,7 @@ void NeuralNet::update_through_backprop_over_mini_batch(
         //allocate a copy of biases and edges so that backpropagation
         //can be applied on the "original" weights for all the training datas
         //in the mini_batch
-        neuronlayers_vec tmp_biases = biases;
+        neuronlayers_vec tmp_biases(biases.begin()+1, biases.end());
         edgelayers_vec tmp_edges = edges;
 
 
@@ -146,40 +165,67 @@ void NeuralNet::backpropagation(
                 edgelayers_vec* pedges_p,
                 float pupdate_rate)
 {
+        //allocation of the temporal memomry by copying the same structure by
+        //hoping that the copy-implementation of the vector-class is very
+        //efficient
         neuronlayers_vec tmp_biases = *pbiases_p;
         edgelayers_vec tmp_edges = *pedges_p;
 
-        neuronlayers_vec activations(tmp_biases.begin()+1, tmp_biases.end());
+        neuronlayers_vec activations = tmp_biases;
 
         if(ptraining_data.input.size() != biases[0].size())
                 exit(wrong_input_size);
 /*
         std::vector<float> tmp(pinput);
         for(int l = 1; l<biases.size(); l++)
-                tmp = calculate_layer(tmp, edges[l-1], biases[l]);
+                tmp = calculate_next_layer(tmp, edges[l-1], biases[l]);
         return tmp;
 */
-        activations[0] = calculate_layer(ptraining_data.input, edges[0], biases[1]);
+        activations[0] = calculate_next_layer(ptraining_data.input, edges[0], biases[0]);
                 
         for(int i = 1; i<activations.size(); i++)
         {
-                activations[i] = calculate_layer(activations[i-1], edges[i], biases[i+1]);
+                activations[i] = calculate_next_layer(activations[i-1], edges[i], biases[i]);
         }
 
 
         //just for an better overview - nnl : number_neuron_layers
         int nnl = tmp_biases.size();
 
-        tmp_biases[nnl-1] = cost_derivative_times_activation_derivative(
-                                                                        activations[nnl-2],
-                                                                        ptraining_data.output);
-        
-        //hier fehlt noch ganz viel
-        //backprop - for loop startet hier!
-        std::cout << std::endl << std::endl;
-        print_output(tmp_biases[nnl-1]);
-        std::cout << std::endl << std::endl;
-        print_output(activations[nnl-2]);
+
+
+        //after calculation of the first delta(tmp_biases[nnl-1]) we can
+        //recursivly calculate all the weights and all the biases
+
+        //the last neuron layer is calculated with cost function(derivative)
+        //in dependence of the last! activation(output), expected output
+        //and the derivative of the activation-function in dep of the last
+        //activation
+        tmp_biases[nnl-1] = cost_derivative_times_activation_derivative(activations[nnl-1], ptraining_data.output);
+        tmp_edges[nnl-1] = vector_multiplication_2d(tmp_biases[nnl-1], activations[nnl-2]);
+
+
+        //for loop for recursive backprop        
+
+        //i==0 needs the input of the system to compute the difference of
+        //the weights of the first layer so this will take place after
+        //the for loop
+/* infinite loop??????????????
+        for(int i = nnl-2; i>0; i--)
+        {
+                tmp_biases[i] = calculate_delta_pre_layer(tmp_biases[i+1], tmp_edges[i+1]);
+                tmp_edges[i] =  vector_multiplication_2d(tmp_biases[i], activations[i-1]);
+        }
+
+
+        //iteration i==0:
+        tmp_biases[0] = calculate_delta_pre_layer(tmp_biases[1], tmp_edges[1]);
+        tmp_edges[0] = vector_multiplication_2d(ptraining_data.input, activations[0]);
+
+        //referral of the adjustments to the net-bias and net-weights
+        sum_up_values_each_neuron(pbiases_p, &tmp_biases);
+        sum_up_values_each_edge(pedges_p, &tmp_edges);
+*/
 }
 
 void NeuralNet::stochastic_gradient_descent(
