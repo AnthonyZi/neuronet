@@ -24,11 +24,14 @@ std::vector<std::vector<float> > vector_multiplication_2d(std::vector<float> pve
 {
         std::vector<std::vector<float> > resMat;
 
+        std::cout << "vm2d" << std::endl;
+
         for(int a = 0; a<pveca.size(); a++)
         {
                 std::vector<float> row;
                 for(int b = 0; b<pvecb.size(); b++)
                 {
+                        std::cout << pveca[a]*pvecb[b] << std::endl;
                         row.push_back(pveca[a]*pvecb[b]);
                 }
                 resMat.push_back(row);

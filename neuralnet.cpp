@@ -139,6 +139,14 @@ void NeuralNet::update_through_backprop_over_mini_batch(
         //in the mini_batch
         neuronlayers_vec tmp_biases(biases.begin()+1, biases.end());
         edgelayers_vec tmp_edges = edges;
+        for(int layer = 0; layer<tmp_biases.size(); layer++)
+        {
+                std::fill(tmp_biases[layer].begin(), tmp_biases[layer].end(), 0);
+                for(int i = 0; i<tmp_edges[layer].size(); i++)
+                {
+                        std::fill(tmp_edges[layer][i].begin(), tmp_edges[layer][i].end(), 0);
+                }
+        }
 
 
 
@@ -151,6 +159,7 @@ void NeuralNet::update_through_backprop_over_mini_batch(
                 //that these values are changed within a mutal exclusion if you
                 //make use of parallelisation
                 backpropagation((*ptraining_data_s_vec_p)[i], &tmp_biases, &tmp_edges, pupdate_rate);
+                std::cout << "iteration " << i << " over mini-batch finished" << std::endl;
         }
 
         //finally overwrite the old weights and biases with the slightly
@@ -192,6 +201,7 @@ void NeuralNet::backpropagation(
         //just for an better overview - nnl : number_neuron_layers
         int nnl = tmp_biases.size();
 
+        std::cout << "nnl is: " << nnl << std::endl;
 
 
         //after calculation of the first delta(tmp_biases[nnl-1]) we can
@@ -210,11 +220,17 @@ void NeuralNet::backpropagation(
         //i==0 needs the input of the system to compute the difference of
         //the weights of the first layer so this will take place after
         //the for loop
-/* infinite loop??????????????
         for(int i = nnl-2; i>0; i--)
         {
+                std::cout << "loop-iteration: " << i << std::endl;
+                std::cout << "tmp_biases: " << tmp_biases[i+1][0] << std::endl;
                 tmp_biases[i] = calculate_delta_pre_layer(tmp_biases[i+1], tmp_edges[i+1]);
+                std::cout << "tmp_edges: " << tmp_edges[i+1][0][0] << std::endl;
+//
+// somewhere here is a mistake!!!!!
+//
                 tmp_edges[i] =  vector_multiplication_2d(tmp_biases[i], activations[i-1]);
+                std::cout << "activations: " << activations[i-1][0] << std::endl;
         }
 
 
@@ -222,10 +238,11 @@ void NeuralNet::backpropagation(
         tmp_biases[0] = calculate_delta_pre_layer(tmp_biases[1], tmp_edges[1]);
         tmp_edges[0] = vector_multiplication_2d(ptraining_data.input, activations[0]);
 
+
+
         //referral of the adjustments to the net-bias and net-weights
-        sum_up_values_each_neuron(pbiases_p, &tmp_biases);
-        sum_up_values_each_edge(pedges_p, &tmp_edges);
-*/
+//        sum_up_values_each_neuron(pbiases_p, &tmp_biases);
+//        sum_up_values_each_edge(pedges_p, &tmp_edges);
 }
 
 void NeuralNet::stochastic_gradient_descent(
