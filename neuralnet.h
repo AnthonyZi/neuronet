@@ -34,10 +34,14 @@ private:
 //                        const std::vector<training_data_s>* ptraining_data_s_vec_p,
 //                        float pupdate_rate);
 
-        void backpropagation(
+        //backpropagation_fast makes use of memory with edges in standard and
+        //transposed form - this is much fast because transposing is not anymore
+        //an operation in this algorithm but needs more memory
+        void backpropagation_fast(
                         training_data_s ptraining_data_s_vec_p,
                         neuronlayers_vec* pbiases_p,
                         edgelayers_vec* pedges_p,
+                        edgelayers_vec* pedges_transposed_p,
                         float pupdate_rate);
 
 

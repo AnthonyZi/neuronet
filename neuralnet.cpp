@@ -126,7 +126,7 @@ std::vector<float> NeuralNet::feedforward(std::vector<float> pinput)
                 exit(wrong_input_size);
         std::vector<float> tmp(pinput);
         for(int l = 1; l<biases.size(); l++)
-                tmp = calculate_next_layer(tmp, edges[l-1], biases[l]);
+                tmp = calculate_next_layer_fast(tmp, edges[l-1], biases[l]);
         return tmp;
 }
 
@@ -152,26 +152,30 @@ void NeuralNet::update_through_backprop_over_mini_batch(
 
         //NOTE_FOR_LATER_DEVELOPEMENT
         //perfect for parallelisation
+        edgelayers_vec tmp_edges_transposed = transpose_vector_of_2d_matrices(tmp_edges);
         for(int i = 0; i<ptraining_data_s_vec_p->size(); i++)
         {
                 //NOTE_FOR_LATER_DEVELOPEMENT
                 //biases and edges are forwarded as addresses, but pay attention
                 //that these values are changed within a mutal exclusion if you
                 //make use of parallelisation
-                backpropagation((*ptraining_data_s_vec_p)[i], &tmp_biases, &tmp_edges, pupdate_rate);
+                backpropagation_fast((*ptraining_data_s_vec_p)[i], &tmp_biases, &tmp_edges, &tmp_edges_transposed, pupdate_rate);
                 std::cout << "iteration " << i << " over mini-batch finished" << std::endl;
         }
+        tmp_edges = transpose_vector_of_2d_matrices(tmp_edges_transposed);
 
         //finally overwrite the old weights and biases with the slightly
         //adjusted version
+        tmp_biases.insert(tmp_biases.begin(), biases[0]);
         biases = tmp_biases;
         edges = tmp_edges;
 }
 
-void NeuralNet::backpropagation(
+void NeuralNet::backpropagation_fast(
                 const training_data_s ptraining_data,
                 neuronlayers_vec* pbiases_p,
                 edgelayers_vec* pedges_p,
+                edgelayers_vec* pedges_transposed_p,
                 float pupdate_rate)
 {
         //allocation of the temporal memomry by copying the same structure by
@@ -179,29 +183,24 @@ void NeuralNet::backpropagation(
         //efficient
         neuronlayers_vec tmp_biases = *pbiases_p;
         edgelayers_vec tmp_edges = *pedges_p;
+        edgelayers_vec tmp_edges_transposed = *pedges_transposed_p;
 
         neuronlayers_vec activations = tmp_biases;
 
         if(ptraining_data.input.size() != biases[0].size())
                 exit(wrong_input_size);
-/*
-        std::vector<float> tmp(pinput);
-        for(int l = 1; l<biases.size(); l++)
-                tmp = calculate_next_layer(tmp, edges[l-1], biases[l]);
-        return tmp;
-*/
-        activations[0] = calculate_next_layer(ptraining_data.input, edges[0], biases[0]);
+
+
+        activations[0] = calculate_next_layer_fast(ptraining_data.input, edges[0], biases[0]);
                 
         for(int i = 1; i<activations.size(); i++)
         {
-                activations[i] = calculate_next_layer(activations[i-1], edges[i], biases[i]);
+                activations[i] = calculate_next_layer_fast(activations[i-1], edges[i], biases[i]);
         }
 
 
         //just for an better overview - nnl : number_neuron_layers
         int nnl = tmp_biases.size();
-
-        std::cout << "nnl is: " << nnl << std::endl;
 
 
         //after calculation of the first delta(tmp_biases[nnl-1]) we can
@@ -212,7 +211,12 @@ void NeuralNet::backpropagation(
         //and the derivative of the activation-function in dep of the last
         //activation
         tmp_biases[nnl-1] = cost_derivative_times_activation_derivative(activations[nnl-1], ptraining_data.output);
-        tmp_edges[nnl-1] = vector_multiplication_2d(tmp_biases[nnl-1], activations[nnl-2]);
+        //feed vectors here in reverse order to obtain the
+        //transposed edges
+        //(see comment of vector_multiplication_2d for the idea of that
+        //function)
+        tmp_edges_transposed[nnl-1] = vector_multiplication_2d(activations[nnl-2], tmp_biases[nnl-1]);
+
 
 
         //for loop for recursive backprop        
@@ -223,26 +227,23 @@ void NeuralNet::backpropagation(
         for(int i = nnl-2; i>0; i--)
         {
                 std::cout << "loop-iteration: " << i << std::endl;
-                std::cout << "tmp_biases: " << tmp_biases[i+1][0] << std::endl;
-                tmp_biases[i] = calculate_delta_pre_layer(tmp_biases[i+1], tmp_edges[i+1]);
-                std::cout << "tmp_edges: " << tmp_edges[i+1][0][0] << std::endl;
-//
-// somewhere here is a mistake!!!!!
-//
-                tmp_edges[i] =  vector_multiplication_2d(tmp_biases[i], activations[i-1]);
-                std::cout << "activations: " << activations[i-1][0] << std::endl;
+                tmp_biases[i] = calculate_delta_pre_layer_fast(tmp_biases[i+1], tmp_edges_transposed[i+1]);
+                //feed vectors here in reverse order to obtain the
+                //transposed edges as above
+                tmp_edges_transposed[i] =  vector_multiplication_2d(activations[i-1], tmp_biases[i]);
         }
 
 
         //iteration i==0:
-        tmp_biases[0] = calculate_delta_pre_layer(tmp_biases[1], tmp_edges[1]);
-        tmp_edges[0] = vector_multiplication_2d(ptraining_data.input, activations[0]);
-
+        tmp_biases[0] = calculate_delta_pre_layer_fast(tmp_biases[1], tmp_edges[1]);
+        //feed vectors here in reverse order to obtain the
+        //transposed edges as above
+        tmp_edges_transposed[0] = vector_multiplication_2d(activations[0], ptraining_data.input);
 
 
         //referral of the adjustments to the net-bias and net-weights
-//        sum_up_values_each_neuron(pbiases_p, &tmp_biases);
-//        sum_up_values_each_edge(pedges_p, &tmp_edges);
+        sum_up_values_each_neuron(pbiases_p, &tmp_biases);
+        sum_up_values_each_edge(pedges_transposed_p, &tmp_edges_transposed);
 }
 
 void NeuralNet::stochastic_gradient_descent(

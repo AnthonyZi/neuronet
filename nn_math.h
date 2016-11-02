@@ -14,13 +14,14 @@ std::vector<std::vector<float> > vector_multiplication_2d(
                 std::vector<float> pveca,
                 std::vector<float> pvecb);
 
-std::vector<float> vector_matrix_multiplication(
+std::vector<float> vector_matrix_multiplication_fast(
                 std::vector<float>pvec,
                 std::vector<std::vector<float> > pmat);
 
+std::vector<std::vector<std::vector<float> > > transpose_vector_of_2d_matrices(std::vector<std::vector<std::vector<float> > > pmat_vec);
 std::vector<std::vector<float> > transponse_2d_matrix(std::vector<std::vector<float> > pmat);
 
-neuronlayer calculate_delta_pre_layer(
+neuronlayer calculate_delta_pre_layer_fast(
                 neuronlayer pdelta_of_next_layer,
                 edgelayer pedges_mat);
 
@@ -36,7 +37,7 @@ neuronlayer cost_derivative_times_activation_derivative(
                 neuronlayer poutput_expected);
 
 //neuronarray_layer_1_index_i = SUM_over_j[ neoronarray_layer_0[index_j]*weightsmatrix_layer_01[index_i][index_j]
-neuronlayer calculate_next_layer(
+neuronlayer calculate_next_layer_fast(
                 neuronlayer pvec,
                 edgelayer pmat,
                 neuronlayer pbias_neurons);

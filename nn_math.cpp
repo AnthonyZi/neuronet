@@ -24,14 +24,12 @@ std::vector<std::vector<float> > vector_multiplication_2d(std::vector<float> pve
 {
         std::vector<std::vector<float> > resMat;
 
-        std::cout << "vm2d" << std::endl;
 
         for(int a = 0; a<pveca.size(); a++)
         {
                 std::vector<float> row;
                 for(int b = 0; b<pvecb.size(); b++)
                 {
-                        std::cout << pveca[a]*pvecb[b] << std::endl;
                         row.push_back(pveca[a]*pvecb[b]);
                 }
                 resMat.push_back(row);
@@ -48,9 +46,20 @@ std::vector<std::vector<float> > vector_multiplication_2d(std::vector<float> pve
 // [ ... ] * | . . . . . | = [ ..... ]
 //           | . . . . . |
 //
-std::vector<float> vector_matrix_multiplication(std::vector<float> pvec, std::vector<std::vector<float> > pmat)
+// this function needs the matrix transposed in order to compute faster
+// with nearby memory addressing (see calculate_next_layer - the same
+// applies there)
+std::vector<float> vector_matrix_multiplication_fast(std::vector<float> pvec, std::vector<std::vector<float> > pmat)
 {
-        
+        std::vector<float> resVec;
+        for(int i = 0; i<pmat.size(); i++)
+        {
+                float sum = 0;
+                for(int j = 0; j<pvec.size(); j++)
+                {
+                        sum += pvec[j]*pmat[i][j];
+                }
+        }
 }
 
 //pay attention to use this only for matrices and not for arrays of arrays with
@@ -70,11 +79,21 @@ std::vector<std::vector<float> > transpose_2d_matrix(std::vector<std::vector<flo
         return resMat;
 }
 
+std::vector<std::vector<std::vector<float> > > transpose_vector_of_2d_matrices(std::vector<std::vector<std::vector<float> > > pmat_vec)
+{
+        std::vector<std::vector<std::vector<float> > > resMatVec;
+        for(int i = 0; i<pmat_vec.size(); i++)
+        {
+                resMatVec.push_back(transpose_2d_matrix(pmat_vec[i]));
+        }
+        return resMatVec;
+}
+
 //NOTE_FOR_LATER_DEVELOPEMENT
 //this should be declared inline!
-neuronlayer calculate_delta_pre_layer(neuronlayer pdelta_of_next_layer, edgelayer pedges_mat)
+neuronlayer calculate_delta_pre_layer_fast(neuronlayer pdelta_of_next_layer, edgelayer pedges_mat)
 {
-        return vector_matrix_multiplication(pdelta_of_next_layer, transpose_2d_matrix(pedges_mat));
+        return vector_matrix_multiplication_fast(pdelta_of_next_layer, transpose_2d_matrix(pedges_mat));
 }
 
 neuronlayers_vec sum_up_values_each_neuron(neuronlayers_vec* pbiases_p, neuronlayers_vec* tmp_biases)
@@ -143,7 +162,9 @@ float activation_function_derivative(float pactivation_function_value_z)
 // [ ... ] * | e10 e11 | = [ .. ]       ; [ .. ] + [ .. ] = [ .. ]
 //           | d20 e21 |
 //
-neuronlayer calculate_next_layer(neuronlayer pvec, edgelayer pmat, neuronlayer pbias_neurons)
+// edgelayers are arranged in the transposed way for a faster computation
+// because of nearby memory:
+neuronlayer calculate_next_layer_fast(neuronlayer pvec, edgelayer pmat, neuronlayer pbias_neurons)
 {
         neuronlayer tmpvec;
         for(int i = 0; i<pmat.size(); i++)
