@@ -235,7 +235,7 @@ void NeuralNet::backpropagation_fast(
 
 
         //iteration i==0:
-        tmp_biases[0] = calculate_delta_pre_layer_fast(tmp_biases[1], tmp_edges[1]);
+        tmp_biases[0] = calculate_delta_pre_layer_fast(tmp_biases[1], tmp_edges_transposed[1]);
         //feed vectors here in reverse order to obtain the
         //transposed edges as above
         tmp_edges_transposed[0] = vector_multiplication_2d(activations[0], ptraining_data.input);

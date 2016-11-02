@@ -60,6 +60,7 @@ std::vector<float> vector_matrix_multiplication_fast(std::vector<float> pvec, st
                         sum += pvec[j]*pmat[i][j];
                 }
         }
+        return resVec;
 }
 
 //pay attention to use this only for matrices and not for arrays of arrays with
@@ -67,12 +68,13 @@ std::vector<float> vector_matrix_multiplication_fast(std::vector<float> pvec, st
 std::vector<std::vector<float> > transpose_2d_matrix(std::vector<std::vector<float> > pmat)
 {
         std::vector<std::vector<float> > resMat;
-        for(int col = 0; col<pmat.size(); col++)
+        for(int newcolindex = 0; newcolindex<pmat[0].size(); newcolindex++)
         {
                 std::vector<float> newrow;
-                for(int row = 0; row<pmat.size(); row++)
+                for(int newrowindex = 0; newrowindex<pmat.size(); newrowindex++)
                 {
-                        newrow.push_back(pmat[row][col]);
+                        //newrowindex=oldcolindex , newcolindex=oldrowindex
+                        newrow.push_back(pmat[newrowindex][newcolindex]);
                 }
                 resMat.push_back(newrow);
         }
@@ -91,12 +93,14 @@ std::vector<std::vector<std::vector<float> > > transpose_vector_of_2d_matrices(s
 
 //NOTE_FOR_LATER_DEVELOPEMENT
 //this should be declared inline!
+//feed the edgelayer-matrix transposed (the memory can be accessed faster with
+//a reorganised/transposed matrix
 neuronlayer calculate_delta_pre_layer_fast(neuronlayer pdelta_of_next_layer, edgelayer pedges_mat)
 {
-        return vector_matrix_multiplication_fast(pdelta_of_next_layer, transpose_2d_matrix(pedges_mat));
+        return vector_matrix_multiplication_fast(pdelta_of_next_layer, pedges_mat);
 }
 
-neuronlayers_vec sum_up_values_each_neuron(neuronlayers_vec* pbiases_p, neuronlayers_vec* tmp_biases)
+void sum_up_values_each_neuron(neuronlayers_vec* pbiases_p, neuronlayers_vec* tmp_biases)
 {
         for(int dim1 = 0; dim1<pbiases_p->size(); dim1++)
         {
@@ -108,7 +112,7 @@ neuronlayers_vec sum_up_values_each_neuron(neuronlayers_vec* pbiases_p, neuronla
 }
 
 
-edgelayers_vec sum_up_values_each_edge(edgelayers_vec* pedges_p, edgelayers_vec* tmp_edges)
+void sum_up_values_each_edge(edgelayers_vec* pedges_p, edgelayers_vec* tmp_edges)
 {
         for(int dim1 = 0; dim1<pedges_p->size(); dim1++)
         {
@@ -127,19 +131,21 @@ float activation_function(float pz)
 {
         #ifdef SOFTSIGN
         return ( pz/(1+abs(pz)) );
+        #endif
 
-        //SIGMOID is standard
-        #else
+        #ifdef SIGMOID
         return ( 1/(1+exp(-pz)) );
         #endif
 }
 
 neuronlayer cost_derivative_times_activation_derivative(neuronlayer poutput_actual, neuronlayer poutput_expected)
 {
+        #ifdef QUADRATICCOST
         neuronlayer result;
         for(int i = 0; i<poutput_expected.size(); i++)
                 result.push_back( (poutput_actual[i]-poutput_expected[i])*activation_function_derivative(poutput_actual[i]) );
         return result;
+        #endif
 }
 
 
@@ -147,8 +153,9 @@ float activation_function_derivative(float pactivation_function_value_z)
 {
         #ifdef SOFTSIGN
         return pactivation_function_value_z*pactivation_function_value_z;
+        #endif
 
-        #else
+        #ifdef SIGMOID
         return pactivation_function_value_z*(1-pactivation_function_value_z);
         #endif
 }

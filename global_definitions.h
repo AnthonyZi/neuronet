@@ -3,8 +3,12 @@
 
 #include <cstdlib>
 
+//NOTE_FOR_LATER_DEVELOPEMENT
+// these fixed defines should maybe be replaced in future to make neural nets
+// more variable
 #define SIGMOID
 //#define SOFTSIGN
+#define QUADRATICCOST
 
 
 typedef struct trainig_data{ 
