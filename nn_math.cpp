@@ -59,6 +59,7 @@ std::vector<float> vector_matrix_multiplication_fast(std::vector<float> pvec, st
                 {
                         sum += pvec[j]*pmat[i][j];
                 }
+                resVec.push_back(sum);
         }
         return resVec;
 }
@@ -81,7 +82,7 @@ std::vector<std::vector<float> > transpose_2d_matrix(std::vector<std::vector<flo
         return resMat;
 }
 
-std::vector<std::vector<std::vector<float> > > transpose_vector_of_2d_matrices(std::vector<std::vector<std::vector<float> > > pmat_vec)
+std::vector<std::vector<std::vector<float> > > transpose_2d_matrices_of_vector(std::vector<std::vector<std::vector<float> > > pmat_vec)
 {
         std::vector<std::vector<std::vector<float> > > resMatVec;
         for(int i = 0; i<pmat_vec.size(); i++)
@@ -92,12 +93,25 @@ std::vector<std::vector<std::vector<float> > > transpose_vector_of_2d_matrices(s
 }
 
 //NOTE_FOR_LATER_DEVELOPEMENT
-//this should be declared inline!
+//actually the same code as "vector_matrix_multiplication_fast" but adapted to:
+//("vector" * "matrix" ) *(componentwise) "derivatives_of_activations_of_one_layer_before"
 //feed the edgelayer-matrix transposed (the memory can be accessed faster with
 //a reorganised/transposed matrix
-neuronlayer calculate_delta_pre_layer_fast(neuronlayer pdelta_of_next_layer, edgelayer pedges_mat)
+neuronlayer calculate_delta_pre_layer_fast(neuronlayer pdelta_of_next_layer, edgelayer pedges_mat, neuronlayer pactivations_of_pre_layer)
 {
-        return vector_matrix_multiplication_fast(pdelta_of_next_layer, pedges_mat);
+        std::vector<float> resVec;
+        for(int i = 0; i<pedges_mat.size(); i++)
+        {
+                float sum = 0;
+                for(int j = 0; j<pdelta_of_next_layer.size(); j++)
+                {
+                        sum += pdelta_of_next_layer[j]*pedges_mat[i][j];
+                }
+                sum *= activation_function_derivative(pactivations_of_pre_layer[i]);
+                std::cout << "sum=" << sum << std::endl;
+                resVec.push_back(sum);
+        }
+        return resVec;
 }
 
 void sum_up_values_each_neuron(neuronlayers_vec* pbiases_p, neuronlayers_vec* tmp_biases)
@@ -116,10 +130,12 @@ void sum_up_values_each_edge(edgelayers_vec* pedges_p, edgelayers_vec* tmp_edges
 {
         for(int dim1 = 0; dim1<pedges_p->size(); dim1++)
         {
-                for(int dim2 = 0; dim2<(*pedges_p)[0].size(); dim2++)
+                for(int dim2 = 0; dim2<(*pedges_p)[dim1].size(); dim2++)
                 {
-                        for(int dim3 = 0; dim3<(*pedges_p)[0][0].size(); dim3++)
+                        for(int dim3 = 0; dim3<(*pedges_p)[dim1][dim2].size(); dim3++)
                         {
+                                std::cout << "dim1:" << dim1 << "  dim2:" << dim2 << "  dim3:" << dim3 << std::endl;
+                                std::cout << "dimensions: " << pedges_p->size() << "," << tmp_edges->size() << "   " << (*pedges_p)[dim1].size() << "," << (*tmp_edges)[dim1].size() << "   " << (*pedges_p)[dim1][dim2].size() << "," << (*tmp_edges)[dim1][dim2].size() << std::endl;
                                 (*pedges_p)[dim1][dim2][dim3] += (*tmp_edges)[dim1][dim2][dim3];
                         }
                 }
@@ -127,6 +143,8 @@ void sum_up_values_each_edge(edgelayers_vec* pedges_p, edgelayers_vec* tmp_edges
 }
 
 
+//NOTE_FOR_LATER_DEVELOPEMENT
+//this should be declared inline
 float activation_function(float pz)
 {
         #ifdef SOFTSIGN
@@ -148,7 +166,8 @@ neuronlayer cost_derivative_times_activation_derivative(neuronlayer poutput_actu
         #endif
 }
 
-
+//NOTE_FOR_LATER_DEVELOPEMENT
+//this should be declared inline
 float activation_function_derivative(float pactivation_function_value_z)
 {
         #ifdef SOFTSIGN

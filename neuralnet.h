@@ -40,7 +40,6 @@ private:
         void backpropagation_fast(
                         training_data_s ptraining_data_s_vec_p,
                         neuronlayers_vec* pbiases_p,
-                        edgelayers_vec* pedges_p,
                         edgelayers_vec* pedges_transposed_p,
                         float pupdate_rate);
 

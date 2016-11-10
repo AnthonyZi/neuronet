@@ -31,14 +31,15 @@ std::vector<float> vector_matrix_multiplication_fast(
                 std::vector<std::vector<float> > pmat);
 
 //use of transpose_2d_matrix for every matrix in the vector of matrices (see below)
-std::vector<std::vector<std::vector<float> > > transpose_vector_of_2d_matrices(std::vector<std::vector<std::vector<float> > > pmat_vec);
+std::vector<std::vector<std::vector<float> > > transpose_2d_matrices_of_vector(std::vector<std::vector<std::vector<float> > > pmat_vec);
 //pay attention to use this only for matrices and not for arrays of arrays with
 //different length
 std::vector<std::vector<float> > transponse_2d_matrix(std::vector<std::vector<float> > pmat);
 
 neuronlayer calculate_delta_pre_layer_fast(
                 neuronlayer pdelta_of_next_layer,
-                edgelayer pedges_mat);
+                edgelayer pedges_mat,
+                neuronlayer pactivations_of_pre_layer);
 
 //result will be saved in the first argument .. simple component-wise addition
 void sum_up_values_each_neuron(neuronlayers_vec* pbiases_p, neuronlayers_vec* tmp_biases);                          
